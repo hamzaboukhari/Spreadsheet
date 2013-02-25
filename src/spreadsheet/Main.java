@@ -9,7 +9,7 @@ public class Main {
     private static final int DEFAULT_NUM_COLUMNS = 5000;
     private static int rows;
     private static int columns;
-    private static SpreadsheetInterface spreadsheet; 
+    private static SpreadsheetGUI spreadsheet; 
     
     
     public static void main(String[] args) {
@@ -21,7 +21,8 @@ public class Main {
     		columns = DEFAULT_NUM_COLUMNS;
     	}
     	
-    	SpreadsheetGUI spreadsheetGUI = new SpreadsheetGUI(spreadsheet, rows, columns);
+    	spreadsheet = new SpreadsheetGUI(new Spreadsheet(), rows, columns);
+    	spreadsheet.start();
     }
 
     
