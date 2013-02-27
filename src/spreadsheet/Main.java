@@ -1,7 +1,6 @@
 package spreadsheet;
 
 import spreadsheet.gui.SpreadsheetGUI;
-import spreadsheet.api.SpreadsheetInterface;
 
 public class Main {
 

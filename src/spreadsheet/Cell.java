@@ -1,13 +1,13 @@
 package spreadsheet;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import spreadsheet.api.CellLocation;
 import spreadsheet.api.ExpressionUtils;
 import spreadsheet.api.observer.Observer;
-import spreadsheet.api.value.*;
+import spreadsheet.api.value.Value;
+import spreadsheet.api.value.InvalidValue;
 
 public class Cell implements Observer<Cell>{
 	
@@ -15,9 +15,8 @@ public class Cell implements Observer<Cell>{
 	private CellLocation cellLocation;
 	private String expression;
 	private Value value;
-	
 	private Set<Observer<Cell>> observers = new HashSet<Observer<Cell>>();
-	private Set<CellLocation> references = new HashSet<CellLocation>();
+	private Set<Cell> references = new HashSet<Cell>();
 	
 	Cell(Spreadsheet spreadsheet, CellLocation cellLocation,
 			String expression, Value value) {
@@ -28,41 +27,36 @@ public class Cell implements Observer<Cell>{
 	}
 	
 	public CellLocation getLocation() {
-		return cellLocation;
+		return this.cellLocation;
 	}
 
-	public String getExpression(CellLocation location) {
-		return expression;
+	public String getExpression() {
+		return this.expression;
 	}
 	
-	public Value getValue(CellLocation location) {
-		return value;
+	public Value getValue() {
+		return this.value;
 	}
 
 	public void updateExpression(String expression) {
-		Iterator<CellLocation> ref = references.iterator();
-		while (ref.hasNext()) {
-			Cell cell = Spreadsheet.getCell(ref.next());
-			removeObserver(cell);
+		for (Cell ref : references) {
+			removeObserver(ref);
 		}
 		references.clear();
 		
 		this.expression = expression;
-		updateValue(new InvalidValue(expression));
-		Spreadsheet.addInvalidCell(this);
+		this.value = new InvalidValue(expression);
+		spreadsheet.addInvalidCell(this);
 		
-		references = ExpressionUtils.getReferencedLocations(expression);
-		Iterator<CellLocation> newRef = references.iterator();
-		while (newRef.hasNext()) {
-			Cell cell = Spreadsheet.getCell(ref.next());
-			addObserver(cell);
+		for (CellLocation loc : ExpressionUtils.getReferencedLocations(expression)) {
+			references.add(spreadsheet.getCell(loc));
 		}
-		
-		Iterator<Observer<Cell>> obs = observers.iterator();
-		while (obs.hasNext()) {
-			obs.next().update(this);
+		for (Cell newRef : references) {
+			addObserver(newRef);
 		}
-		
+		for (Observer<Cell> obs : observers) {
+			obs.update(this);
+		}
 	}
 	
 	public void updateValue(Value value) {
@@ -71,14 +65,11 @@ public class Cell implements Observer<Cell>{
 
 	@Override
 	public void update(Cell changed) {
-		Spreadsheet.addInvalidCell(changed);
-		changed.updateValue(new InvalidValue(expression));
-	
-		Iterator<Observer<Cell>> obs = observers.iterator();
-		while (obs.hasNext()) {
-			obs.next().update(this);
+		spreadsheet.addInvalidCell(this);
+		updateValue(new InvalidValue(expression));
+		for (Observer<Cell> obs : observers) {
+			obs.update(this);
 		}
-		
 	}
 	
 	private void removeObserver(Observer<Cell> observer) {
@@ -87,5 +78,9 @@ public class Cell implements Observer<Cell>{
 	
 	private void addObserver(Observer<Cell> observer) {
 		observers.add(observer);
+	}
+	
+	public Set<Cell> getReferences() {
+		 return this.references;
 	}
 }
