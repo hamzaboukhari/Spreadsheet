@@ -18,12 +18,9 @@ public class Cell implements Observer<Cell>{
 	private Set<Observer<Cell>> observers = new HashSet<Observer<Cell>>();
 	private Set<Cell> references = new HashSet<Cell>();
 	
-	Cell(Spreadsheet spreadsheet, CellLocation cellLocation,
-			String expression, Value value) {
+	Cell(Spreadsheet spreadsheet, CellLocation cellLocation) {
 		this.spreadsheet = spreadsheet;
 		this.cellLocation = cellLocation;
-		this.expression = expression;
-		this.value = value;
 	}
 	
 	public CellLocation getLocation() {
@@ -48,7 +45,9 @@ public class Cell implements Observer<Cell>{
 		this.value = new InvalidValue(expression);
 		spreadsheet.addInvalidCell(this);
 		
-		for (CellLocation loc : ExpressionUtils.getReferencedLocations(expression)) {
+		Set<CellLocation> refLocs = ExpressionUtils.getReferencedLocations(expression);
+		
+		for (CellLocation loc : refLocs) {
 			references.add(spreadsheet.getCell(loc));
 		}
 		for (Cell newRef : references) {
@@ -65,10 +64,12 @@ public class Cell implements Observer<Cell>{
 
 	@Override
 	public void update(Cell changed) {
-		spreadsheet.addInvalidCell(this);
-		updateValue(new InvalidValue(expression));
-		for (Observer<Cell> obs : observers) {
-			obs.update(this);
+		if(!spreadsheet.checkInvalidCell(this)) {
+			spreadsheet.addInvalidCell(this);
+			updateValue(new InvalidValue(expression));
+			for (Observer<Cell> obs : observers) {
+				obs.update(this);
+			}
 		}
 	}
 	
@@ -83,4 +84,5 @@ public class Cell implements Observer<Cell>{
 	public Set<Cell> getReferences() {
 		 return this.references;
 	}
+	
 }
