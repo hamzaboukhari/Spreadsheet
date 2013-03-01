@@ -20,10 +20,11 @@ public class Spreadsheet implements SpreadsheetInterface {
 	
 	private Set<Cell> invalidCells = new HashSet<Cell>();
 	private Set<Cell> calculatedCells = new HashSet<Cell>();
-	private Set<Cell> LoopCells = new HashSet<Cell>();
+	private Set<Cell> loopCells = new HashSet<Cell>();
 	private Map<CellLocation, Cell> cells = new HashMap<CellLocation, Cell>();
 	private Deque<Cell> cellsToCompute = new ArrayDeque<Cell>();
 	private HashMap<CellLocation, Double> cellDependents = new HashMap<CellLocation, Double>();
+	private double dval;
  	
 	public Cell getCell(CellLocation location) {
 		if (cells.get(location) == null) {
@@ -67,7 +68,7 @@ public class Spreadsheet implements SpreadsheetInterface {
 	private void recomputeCell(Cell c) {
 		checkLoops(c, new LinkedHashSet<Cell>());
 		
-		if (!LoopCells.contains(c)) {
+		if (!loopCells.contains(c)) {
 			cellsToCompute.add(c);
 			while(!cellsToCompute.isEmpty()) {
 				Cell current = cellsToCompute.getFirst();
@@ -86,24 +87,22 @@ public class Spreadsheet implements SpreadsheetInterface {
 			}
 		}
 	}
-	double dval;
-	private void calculateCellValue(Cell cell) {
-			Value val = ExpressionUtils.computeValue(cell.getExpression(), cellDependents);
-			val.visit( new ValueVisitor(){
-						public void visitDouble(double value) {
-							dval = value;
-						}
-					    
-					    public void visitLoop(){}
-					    
-					    public void visitString(String expression){}
 
-					    public void visitInvalid(String expression){}
-			});
-			cellDependents.put(cell.getLocation(), dval);
-		    cell.updateValue(val);
-		    
-		    
+	private void calculateCellValue(Cell cell) {
+		Value val = ExpressionUtils.computeValue(cell.getExpression(), cellDependents);
+		val.visit( new ValueVisitor(){
+					public void visitDouble(double value) {
+						dval = value;
+					}
+					    
+					public void visitLoop(){}
+					    
+					public void visitString(String expression){}
+
+					public void visitInvalid(String expression){}
+		});
+		cellDependents.put(cell.getLocation(), dval);
+		cell.updateValue(val);	    
 	}
 	
 	private void checkLoops(Cell c, LinkedHashSet<Cell> cellsSeen) {
@@ -122,17 +121,16 @@ public class Spreadsheet implements SpreadsheetInterface {
 		startCell.updateValue(LoopValue.INSTANCE);
 		boolean passedStartCell = false;
 		for (Cell cell : cells) {
-			if(passedStartCell) {
+			if (passedStartCell) {
 				cell.updateValue(LoopValue.INSTANCE);
 			} else if (cell.equals(startCell)) {
 				passedStartCell = true;
 			}
-			LoopCells.add(cell);
+			loopCells.add(cell);
 		}	
 	}
 	
-	boolean checkInvalidCell(Cell cell) {
+	public boolean checkInvalidCell(Cell cell) {
 		return invalidCells.contains(cell);
 	}
-	
 }

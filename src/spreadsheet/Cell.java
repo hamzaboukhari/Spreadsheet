@@ -64,7 +64,7 @@ public class Cell implements Observer<Cell>{
 
 	@Override
 	public void update(Cell changed) {
-		if(!spreadsheet.checkInvalidCell(this)) {
+		if (!spreadsheet.checkInvalidCell(this)) {
 			spreadsheet.addInvalidCell(this);
 			updateValue(new InvalidValue(expression));
 			for (Observer<Cell> obs : observers) {

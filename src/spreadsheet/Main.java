@@ -12,7 +12,7 @@ public class Main {
     
     
     public static void main(String[] args) {
-    	if(args.length == 2) {
+    	if (args.length == 2) {
     		rows = Integer.parseInt(args[0]);
     		columns = Integer.parseInt(args[1]);
     	} else {
